@@ -438,6 +438,11 @@ local Templates = {
         -- }
         -- Default: built-in rotating light (kaitenhikari.png). Set ContentBackground = { Enabled = false } to turn off.
         -- Extra keys: Rotate = true, RotationSpeed = 20 (deg/sec), Scale = 1.1
+        -- Url = "https://.../bg.mp4"  -> downloaded at startup. Supported: mp4 / webm (real animation, looped),
+        --                                png / jpg (static, or sprite sheet with Columns/Rows/Frames/FrameSize/FPS).
+        --                                GIF can't be played by Roblox -> convert it to mp4/webm first.
+        --                                If the download/format fails, the built-in rotating light stays.
+        -- VideoDim = 0.45 (0 = no dimming .. 1 = fully dark overlay on top of a video, keeps text readable)
         ContentBackground = { Enabled = true },
 
         --// Animations \\--
@@ -12434,7 +12439,7 @@ function Library:CreateWindow(WindowInfo)
                 end
             end
 
-            if Source then
+            if Source or CB.Url then
                 local Columns = math.max(1, CB.Columns or 1)
                 local Rows = math.max(1, CB.Rows or 1)
                 local Frames = math.clamp(CB.Frames or (Columns * Rows), 1, Columns * Rows)
@@ -12448,7 +12453,7 @@ function Library:CreateWindow(WindowInfo)
                     Active = false,
                     AnchorPoint = Vector2.new(0.5, 0.5),
                     BackgroundTransparency = 1,
-                    Image = Source,
+                    Image = Source or "",
                     ImageTransparency = CB.Transparency or 0.3,
                     Name = "ContentBackground",
                     Position = UDim2.fromScale(0.5, 0.5),
@@ -12486,6 +12491,128 @@ function Library:CreateWindow(WindowInfo)
                     ContentBackgroundImage.ImageRectOffset =
                         Vector2.new((Index % Columns) * FrameSize.X, math.floor(Index / Columns) * FrameSize.Y)
                 end))
+
+                -- remote background: the built-in light above is shown immediately and is only
+                -- replaced if the download works and the format is usable (otherwise it just stays)
+                if typeof(CB.Url) == "string" and CB.Url ~= "" then
+                    task.spawn(function()
+                        local function Fail(Reason)
+                            warn("[Library] ContentBackground.Url: " .. Reason .. " (using built-in background)")
+                            pcall(function()
+                                Library:Notify({
+                                    Title = "Background",
+                                    Description = Reason,
+                                    Time = 6,
+                                })
+                            end)
+                        end
+
+                        if not (writefile and isfile and getcustomasset) then
+                            return Fail("this executor has no writefile/getcustomasset")
+                        end
+
+                        local Body
+                        local Ok, Result = pcall(function()
+                            return game:HttpGet(CB.Url)
+                        end)
+                        if Ok and typeof(Result) == "string" and #Result > 16 then
+                            Body = Result
+                        else
+                            local Request = request or http_request or (syn and syn.request) or (http and http.request)
+                            if Request then
+                                local Ok2, Response = pcall(Request, { Url = CB.Url, Method = "GET" })
+                                if Ok2 and typeof(Response) == "table" and Response.Body and #Response.Body > 16
+                                    and (Response.StatusCode or 200) == 200 then
+                                    Body = Response.Body
+                                end
+                            end
+                        end
+                        if not Body then
+                            return Fail("download failed")
+                        end
+
+                        local Head = Body:sub(1, 4)
+                        local Ext
+                        if Head == "\137PNG" then
+                            Ext = "png"
+                        elseif Head:sub(1, 3) == "\255\216\255" then
+                            Ext = "jpg"
+                        elseif Head == "\026\069\223\163" then
+                            Ext = "webm"
+                        elseif Body:sub(5, 8) == "ftyp" then
+                            Ext = "mp4"
+                        elseif Head == "GIF8" then
+                            return Fail("GIF can't be played in Roblox - convert it to mp4/webm (or a sprite sheet png)")
+                        else
+                            return Fail("unsupported file type (use mp4, webm, png or jpg)")
+                        end
+
+                        local Hash = 0
+                        for i = 1, #CB.Url do
+                            Hash = (Hash * 31 + CB.Url:byte(i)) % 1000000007
+                        end
+                        local FileName = "glassui_bg_" .. Hash .. "." .. Ext
+                        local Wrote = pcall(writefile, FileName, Body)
+                        local OkAsset, Asset = pcall(getcustomasset, FileName)
+                        if not (Wrote and OkAsset and Asset) then
+                            return Fail("could not load the downloaded file")
+                        end
+                        if not (Container and Container.Parent) then
+                            return
+                        end
+
+                        if Ext == "mp4" or Ext == "webm" then
+                            local Video = New("VideoFrame", {
+                                Active = false,
+                                BackgroundTransparency = 1,
+                                Looped = true,
+                                Name = "ContentBackgroundVideo",
+                                Size = UDim2.fromScale(1, 1),
+                                Video = Asset,
+                                Volume = 0,
+                                ZIndex = 0,
+                                Parent = Container,
+                            })
+                            -- dim overlay: videos can't be transparent, so darken instead (keeps text readable)
+                            New("Frame", {
+                                Active = false,
+                                BackgroundColor3 = Color3.fromRGB(8, 12, 24),
+                                BackgroundTransparency = CB.VideoDim or 0.45,
+                                BorderSizePixel = 0,
+                                Name = "ContentBackgroundDim",
+                                Size = UDim2.fromScale(1, 1),
+                                ZIndex = 0,
+                                Parent = Container,
+                            })
+                            Video.Playing = MainFrame.Visible
+                            Library:GiveSignal(MainFrame:GetPropertyChangedSignal("Visible"):Connect(function()
+                                if Video.Parent then
+                                    Video.Playing = MainFrame.Visible
+                                end
+                            end))
+                            ContentBackgroundImage.Visible = false
+                            RotationSpeed, Animated = 0, false
+                        else
+                            -- static image or sprite sheet
+                            RotationSpeed = if CB.Rotate ~= nil then RotationSpeed else 0
+                            ContentBackgroundImage.Image = Asset
+                            ContentBackgroundImage.ImageTransparency = CB.Transparency or 0.3
+                            if RotationSpeed == 0 then
+                                ContentBackgroundImage.Rotation = 0
+                                ContentBackgroundImage.SizeConstraint = Enum.SizeConstraint.RelativeXY
+                                ContentBackgroundImage.Size = UDim2.fromScale(1, 1)
+                                ContentBackgroundImage.ScaleType = Enum.ScaleType.Crop
+                            end
+                            if Frames > 1 then
+                                ContentBackgroundImage.ImageRectSize = FrameSize
+                                Animated = true
+                            else
+                                ContentBackgroundImage.ImageRectSize = Vector2.zero
+                                Animated = false
+                            end
+                        end
+                    end)
+                end
             end
         end
 
