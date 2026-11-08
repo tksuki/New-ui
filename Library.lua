@@ -11154,6 +11154,7 @@ end
 Library.AllFontEnabled = false
 local AllFontOriginals = setmetatable({}, { __mode = "k" }) -- text object -> its original Font
 local AllFontConnections = {}
+local AllFontWatchers = setmetatable({}, { __mode = "k" }) -- text object -> FontFace change listener
 local AllFontFace
 local AllFontUnloadHooked = false
 
@@ -11181,6 +11182,33 @@ local function ApplyAllFont(Object)
     pcall(function()
         Object.FontFace = AllFontFace
     end)
+
+    -- if a script sets its own font later (common right after creating a label), put ours back
+    if not AllFontWatchers[Object] then
+        local Ok2, Signal = pcall(function()
+            return Object:GetPropertyChangedSignal("FontFace")
+        end)
+        if Ok2 then
+            AllFontWatchers[Object] = Signal:Connect(function()
+                if not Library.AllFontEnabled then
+                    return
+                end
+                local OkNow, Now = pcall(function()
+                    return Object.FontFace
+                end)
+                if OkNow and Now ~= AllFontFace then
+                    AllFontOriginals[Object] = Now
+                    task.defer(function()
+                        if Library.AllFontEnabled then
+                            pcall(function()
+                                Object.FontFace = AllFontFace
+                            end)
+                        end
+                    end)
+                end
+            end)
+        end
+    end
 end
 
 function Library:SetAllFont(Enabled: boolean, FontFace: (Font | EnumItem)?)
@@ -11196,6 +11224,10 @@ function Library:SetAllFont(Enabled: boolean, FontFace: (Font | EnumItem)?)
 
     if not Enabled then
         Library.AllFontEnabled = false
+        for _, Watcher in AllFontWatchers do
+            Watcher:Disconnect()
+        end
+        table.clear(AllFontWatchers)
         for Object, Original in AllFontOriginals do
             if Object.Parent then
                 pcall(function()
@@ -11228,6 +11260,12 @@ function Library:SetAllFont(Enabled: boolean, FontFace: (Font | EnumItem)?)
     end)
     if OkCore and CoreGuiService then
         table.insert(Roots, CoreGuiService)
+    end
+    local OkHui, HiddenGui = pcall(function()
+        return gethui and gethui()
+    end)
+    if OkHui and typeof(HiddenGui) == "Instance" and HiddenGui ~= CoreGuiService then
+        table.insert(Roots, HiddenGui)
     end
 
     for _, Root in Roots do
