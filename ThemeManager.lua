@@ -851,6 +851,15 @@ function ThemeManager:CreateThemeManager(Themesbox: any)
         AllowNull = false,
         Multi = false
     })
+
+    Themesbox:AddToggle("AllFont", {
+        Text = "All Font",
+        Default = false,
+        Tooltip = "ON: apply the selected font to every text in the game (turn OFF to restore)",
+        Callback = function(Value)
+            ThemeManager.Library:SetAllFont(Value)
+        end,
+    })
     
     Themesbox:AddInput("BackgroundImage", { 
         Text = "Background Image",
