@@ -11134,6 +11134,10 @@ function Library:SetFont(FontFace)
     Library.Scheme.Font = FontFace
     Library:UpdateColorsUsingRegistry()
 
+    if Library.AllFontEnabled then
+        Library:SetAllFont(true, FontFace)
+    end
+
     for _, Label in Labels do
         if Label.DoesWrap then
             Label:Display()
@@ -11143,6 +11147,111 @@ function Library:SetFont(FontFace)
 
     if Library.Window and Library.Window.RefreshTitleSize then
         Library.Window:RefreshTitleSize()
+    end
+end
+
+--// "All Font": apply the chosen font to every text object in the game \\--
+Library.AllFontEnabled = false
+local AllFontOriginals = setmetatable({}, { __mode = "k" }) -- text object -> its original Font
+local AllFontConnections = {}
+local AllFontFace
+local AllFontUnloadHooked = false
+
+local function ApplyAllFont(Object)
+    if not (Object:IsA("TextLabel") or Object:IsA("TextButton") or Object:IsA("TextBox")) then
+        return
+    end
+    -- leave the library's own interface alone (it already follows Library:SetFont)
+    if ScreenGui and Object:IsDescendantOf(ScreenGui) then
+        return
+    end
+    if Library.ActiveLoading and Library.ActiveLoading.ScreenGui and Object:IsDescendantOf(Library.ActiveLoading.ScreenGui) then
+        return
+    end
+
+    local Ok, Current = pcall(function()
+        return Object.FontFace
+    end)
+    if not Ok then
+        return
+    end
+    if AllFontOriginals[Object] == nil then
+        AllFontOriginals[Object] = Current
+    end
+    pcall(function()
+        Object.FontFace = AllFontFace
+    end)
+end
+
+function Library:SetAllFont(Enabled: boolean, FontFace: (Font | EnumItem)?)
+    FontFace = FontFace or Library.Scheme.Font
+    if typeof(FontFace) == "EnumItem" then
+        FontFace = Font.fromEnum(FontFace :: any)
+    end
+
+    for _, Connection in AllFontConnections do
+        Connection:Disconnect()
+    end
+    table.clear(AllFontConnections)
+
+    if not Enabled then
+        Library.AllFontEnabled = false
+        for Object, Original in AllFontOriginals do
+            if Object.Parent then
+                pcall(function()
+                    Object.FontFace = Original
+                end)
+            end
+        end
+        table.clear(AllFontOriginals)
+        return
+    end
+
+    Library.AllFontEnabled = true
+    AllFontFace = FontFace
+
+    if not AllFontUnloadHooked then
+        AllFontUnloadHooked = true
+        table.insert(Library.UnloadSignals, function()
+            Library:SetAllFont(false)
+        end)
+    end
+
+    local Roots = { workspace }
+    local PlayerGui = pcall(function() return Players.LocalPlayer end) and Players.LocalPlayer
+        and Players.LocalPlayer:FindFirstChildOfClass("PlayerGui")
+    if PlayerGui then
+        table.insert(Roots, PlayerGui)
+    end
+    local OkCore, CoreGuiService = pcall(function()
+        return cloneref(game:GetService("CoreGui"))
+    end)
+    if OkCore and CoreGuiService then
+        table.insert(Roots, CoreGuiService)
+    end
+
+    for _, Root in Roots do
+        -- text that appears later (new menus, chat, billboards...) gets the font too
+        table.insert(AllFontConnections, Root.DescendantAdded:Connect(function(Descendant)
+            if Library.AllFontEnabled then
+                ApplyAllFont(Descendant)
+            end
+        end))
+
+        -- text that already exists (scanned in slices so big games don't freeze)
+        task.spawn(function()
+            local Count = 0
+            for _, Descendant in Root:GetDescendants() do
+                if not Library.AllFontEnabled or AllFontFace ~= FontFace then
+                    return
+                end
+                ApplyAllFont(Descendant)
+                Count += 1
+                if Count % 800 == 0 then
+                    task.wait()
+                end
+            end
+        end)
     end
 end
 
