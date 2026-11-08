@@ -3752,7 +3752,7 @@ function Library:AddContextMenu(
             AutomaticCanvasSize = Enum.AutomaticSize.None,
             AutomaticSize = List == 1 and Enum.AutomaticSize.Y or Enum.AutomaticSize.None,
             BackgroundColor3 = "BackgroundColor",
-            BackgroundTransparency = 0.6,
+            BackgroundTransparency = 0.05, -- popups sit on top of other text: keep them nearly solid
             BottomImage = "rbxasset://textures/ui/Scroll/scroll-middle.png",
             CanvasSize = UDim2.fromOffset(0, 0),
             ScrollBarImageColor3 = "OutlineColor",
@@ -3766,7 +3766,7 @@ function Library:AddContextMenu(
     else
         Menu = New("Frame", {
             BackgroundColor3 = "BackgroundColor",
-            BackgroundTransparency = 0.6,
+            BackgroundTransparency = 0.05, -- popups sit on top of other text: keep them nearly solid
             Size = typeof(Size) == "function" and Size() or Size,
             Visible = false,
             ZIndex = 1,
@@ -4101,7 +4101,7 @@ end))
 --// Tooltip \\--
 local TooltipLabel = New("TextLabel", {
     BackgroundColor3 = "BackgroundColor",
-    BackgroundTransparency = 0.6,
+    BackgroundTransparency = 0.1,
     TextSize = 14,
     TextWrapped = true,
     Visible = false,
@@ -11083,7 +11083,7 @@ function Library:SetFont(FontFace)
 end
 
 --// Font selector (Settings tab) \\--
-Library.AutoFontSelector = true -- adds a "Font" group box to every tab whose name contains "setting"
+Library.AutoFontSelector = false -- (ThemeManager's "Font Face" dropdown is used instead) set true to add a "Font" group box to every tab whose name contains "setting"
 Library.FontChoices = {
     { Name = "Press Start 2P", Face = Font.new("rbxasset://fonts/families/PressStart2P.json", Enum.FontWeight.Regular) },
     { Name = "Grenze Gotisch", Face = Font.new("rbxasset://fonts/families/GrenzeGotisch.json", Enum.FontWeight.Regular) },
@@ -11224,7 +11224,7 @@ function Library:Notify(...)
     local Holder = New("Frame", {
         AutomaticSize = Enum.AutomaticSize.Y,
         BackgroundColor3 = "MainColor",
-        BackgroundTransparency = 0.5,
+        BackgroundTransparency = 0.12,
         Position = Library.NotifySide:lower() == "left" and UDim2.new(-1, -8, 0, 0) or UDim2.new(1, 8, 0, 0),
         Size = UDim2.new(1, 0, 0, 0),
         ZIndex = 5,
