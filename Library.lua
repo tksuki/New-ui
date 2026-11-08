@@ -11175,6 +11175,30 @@ Library.AllFontIgnore = {
     "ModalGui", "ChatBar", "Backpack",
 }
 
+-- Only objects that currently use a normal built-in text font are changed.
+-- Icon fonts (the menu / chat / settings buttons draw their icon from a word like "menu")
+-- and custom fonts are left alone, otherwise the icon turns into its plain name.
+local function IsPlainTextFont(Face): boolean
+    local Ok, Family = pcall(function()
+        return Face.Family
+    end)
+    if not Ok or typeof(Family) ~= "string" then
+        return false
+    end
+
+    local Lower = Family:lower()
+    local BuiltIn = "rbxasset://fonts/families/"
+    if Lower:sub(1, #BuiltIn) ~= BuiltIn then
+        return false
+    end
+    for _, Word in { "icon", "symbol", "glyph", "awesome", "material", "emoji" } do
+        if Lower:find(Word, 1, true) then
+            return false
+        end
+    end
+    return true
+end
+
 local function IsIgnoredByAllFont(Object)
     -- climb to the GUI directly under CoreGui / PlayerGui that contains this object
     local Top = Object
@@ -11218,7 +11242,7 @@ local function ApplyAllFont(Object)
     local Ok, Current = pcall(function()
         return Object.FontFace
     end)
-    if not Ok then
+    if not Ok or not IsPlainTextFont(Current) then
         return
     end
     if AllFontOriginals[Object] == nil then
@@ -11241,7 +11265,7 @@ local function ApplyAllFont(Object)
                 local OkNow, Now = pcall(function()
                     return Object.FontFace
                 end)
-                if OkNow and Now ~= AllFontFace then
+                if OkNow and Now ~= AllFontFace and IsPlainTextFont(Now) then
                     AllFontOriginals[Object] = Now
                     task.defer(function()
                         if Library.AllFontEnabled then
@@ -11288,7 +11312,7 @@ function Library:SetAllFont(Enabled: boolean, FontFace: (Font | EnumItem)?)
     AllFontFace = FontFace
 
     for Object, Original in AllFontOriginals do
-        if Object.Parent and IsIgnoredByAllFont(Object) then
+        if Object.Parent and (IsIgnoredByAllFont(Object) or not IsPlainTextFont(Original)) then
             pcall(function()
                 Object.FontFace = Original
             end)
