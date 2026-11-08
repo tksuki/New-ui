@@ -274,6 +274,10 @@ local Library = {
     CornerRadius = 16,
 
     --// Liquid Glass \\--
+    SmoothDrag = true,       -- windows / draggable UI glide to the cursor instead of snapping
+    SmoothDragSpeed = 11,    -- lower = floatier & later to catch up, higher = tighter
+    RimSpinSpeed = 100,      -- degrees per second the shining border travels on draggable buttons/labels
+
     GlassBlur = true,      -- blur the 3D world behind the window (set before CreateWindow)
     GlassBlurSize = 18,
 
@@ -2343,6 +2347,30 @@ function Library:MakeDraggable(
 
     local SnapGuideX, SnapGuideY
 
+    -- smooth follow: the cursor sets a target, the UI eases toward it every frame
+    local TargetPos: UDim2? = nil
+    local SmoothConn = RunService.RenderStepped:Connect(function(Delta)
+        if not TargetPos or not UI.Parent then
+            return
+        end
+
+        local Current = UI.Position
+        local Alpha = 1 - math.exp(-Delta * (Library.SmoothDragSpeed or 11))
+        local Next = Current:Lerp(TargetPos, Alpha)
+
+        if
+            math.abs(TargetPos.X.Offset - Next.X.Offset) < 0.4
+            and math.abs(TargetPos.Y.Offset - Next.Y.Offset) < 0.4
+            and not Dragging
+        then
+            UI.Position = TargetPos
+            TargetPos = nil
+        else
+            UI.Position = Next
+        end
+    end)
+    Library:GiveSignal(SmoothConn)
+
     local function GetSnapGuides()
         if not SnapGuideX then
             SnapGuideX = New("Frame", {
@@ -2460,7 +2488,12 @@ function Library:MakeDraggable(
                 end
             end
 
-            UI.Position = UDim2.new(FramePos.X.Scale, NewX, FramePos.Y.Scale, NewY)
+            local Goal = UDim2.new(FramePos.X.Scale, NewX, FramePos.Y.Scale, NewY)
+            if Library.SmoothDrag then
+                TargetPos = Goal
+            else
+                UI.Position = Goal
+            end
         end
     end)
 
@@ -2468,6 +2501,10 @@ function Library:MakeDraggable(
     Library:GiveSignal(InputBegan)
 
     UI.Destroying:Once(function()
+        if SmoothConn and SmoothConn.Connected then
+            SmoothConn:Disconnect()
+        end
+
         if InputChanged and InputChanged.Connected then
             InputChanged:Disconnect()
         end
@@ -2611,6 +2648,33 @@ function Library:MakeLine(Frame: GuiObject, Info)
     return Line
 end
 
+--// Travelling shine on borders (used by the draggable buttons / labels / menus) \\--
+local SpinningRims = {}
+local RimLoop
+function Library:SpinRim(Gradient: UIGradient?)
+    if not Gradient then
+        return
+    end
+
+    table.insert(SpinningRims, Gradient)
+    if RimLoop then
+        return
+    end
+
+    RimLoop = RunService.RenderStepped:Connect(function(Delta)
+        local Step = (Library.RimSpinSpeed or 100) * Delta
+        for Index = #SpinningRims, 1, -1 do
+            local Rim = SpinningRims[Index]
+            if not Rim.Parent then
+                table.remove(SpinningRims, Index)
+            else
+                Rim.Rotation = (Rim.Rotation + Step) % 360
+            end
+        end
+    end)
+    Library:GiveSignal(RimLoop)
+end
+
 function Library:AddOutline(Frame: GuiObject)
     local OutlineStroke = New("UIStroke", {
         Color = "OutlineColor",
@@ -2620,7 +2684,7 @@ function Library:AddOutline(Frame: GuiObject)
         Parent = Frame,
     })
     -- Liquid Glass specular rim: light catches the opposite corners, edges stay almost clear
-    New("UIGradient", {
+    local RimGradient = New("UIGradient", {
         Transparency = NumberSequence.new({
             NumberSequenceKeypoint.new(0, 0.02),
             NumberSequenceKeypoint.new(0.18, 0.62),
@@ -2654,7 +2718,7 @@ function Library:AddOutline(Frame: GuiObject)
             Parent = Frame,
         })
     end
-    return OutlineStroke, ShadowStroke
+    return OutlineStroke, ShadowStroke, RimGradient
 end
 
 function Library:AddBlank(Frame: GuiObject, Size: UDim2)
@@ -3333,7 +3397,7 @@ function Library:AddDraggableLabel(...)
         })
     )
 
-    Library:AddOutline(Label)
+    Library:SpinRim(select(3, Library:AddOutline(Label)))
     Library:MakeDraggable(Label, Label, true)
 
     function DraggableLabel:SetText(Text: string)
@@ -3462,7 +3526,7 @@ function Library:AddDraggableButton(...)
             })
         )
     end
-    Library:AddOutline(Button)
+    Library:SpinRim(select(3, Library:AddOutline(Button)))
 
     local PressPosition
     Button.InputBegan:Connect(function(Input: InputObject)
@@ -3542,7 +3606,7 @@ function Library:AddDraggableMenu(Name: string)
             Parent = Holder,
         })
     )
-    Library:AddOutline(Holder)
+    Library:SpinRim(select(3, Library:AddOutline(Holder)))
 
     local DividerLine = Library:MakeLine(Holder, {
         Position = UDim2.fromOffset(0, 34),
@@ -3651,7 +3715,7 @@ function Library:AddDraggableImageButton(...)
             })
         )
     end
-    Library:AddOutline(Button)
+    Library:SpinRim(select(3, Library:AddOutline(Button)))
 
     local PressPosition
     Button.InputBegan:Connect(function(Input: InputObject)
