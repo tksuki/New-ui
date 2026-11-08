@@ -20,6 +20,15 @@ local gethui = gethui or function()
     return CoreGui
 end
 
+-- Roblox's own interface (top bar, menu button, settings, chat...) already lives in CoreGui at this point.
+-- "All Font" uses this snapshot to leave it alone.
+local CoreGuiBaseline = {}
+pcall(function()
+    for _, Child in CoreGui:GetChildren() do
+        CoreGuiBaseline[Child] = true
+    end
+end)
+
 local LocalPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
 local Mouse = cloneref(LocalPlayer:GetMouse())
 
@@ -11158,12 +11167,48 @@ local AllFontWatchers = setmetatable({}, { __mode = "k" }) -- text object -> Fon
 local AllFontFace
 local AllFontUnloadHooked = false
 
+-- top-level GUIs that "All Font" never touches (Roblox core UI that is created later than the snapshot)
+Library.AllFontIgnore = {
+    "RobloxGui", "TopBarApp", "TopBar", "ExperienceChat", "Chat", "BubbleChat", "PlayerList",
+    "ThemeProvider", "PurchasePromptApp", "RobloxPromptGui", "RobloxNetworkPauseNotification",
+    "InGameMenu", "InGameMenuApp", "FoundationOverlay", "ControlGui", "RobloxLoadingGui", "ScreenshotHud",
+    "ModalGui", "ChatBar", "Backpack",
+}
+
+local function IsIgnoredByAllFont(Object)
+    -- climb to the GUI directly under CoreGui / PlayerGui that contains this object
+    local Top = Object
+    while Top.Parent do
+        local ParentClass = Top.Parent.ClassName
+        if ParentClass == "CoreGui" or ParentClass == "PlayerGui" then
+            break
+        end
+        Top = Top.Parent
+    end
+    local Container = Top.Parent
+    if not Container then
+        return false
+    end
+    if table.find(Library.AllFontIgnore, Top.Name) then
+        return true
+    end
+    -- anything that was already in CoreGui before this library loaded is Roblox's own UI
+    if Container.ClassName == "CoreGui" and CoreGuiBaseline[Top] then
+        return true
+    end
+    return false
+end
+
 local function ApplyAllFont(Object)
     if not (Object:IsA("TextLabel") or Object:IsA("TextButton") or Object:IsA("TextBox")) then
         return
     end
     -- leave the library's own interface alone (it already follows Library:SetFont)
     if ScreenGui and Object:IsDescendantOf(ScreenGui) then
+        return
+    end
+    -- and leave Roblox's own UI (menu button, settings, chat, top bar) alone
+    if IsIgnoredByAllFont(Object) then
         return
     end
     if Library.ActiveLoading and Library.ActiveLoading.ScreenGui and Object:IsDescendantOf(Library.ActiveLoading.ScreenGui) then
@@ -11241,6 +11286,15 @@ function Library:SetAllFont(Enabled: boolean, FontFace: (Font | EnumItem)?)
 
     Library.AllFontEnabled = true
     AllFontFace = FontFace
+
+    for Object, Original in AllFontOriginals do
+        if Object.Parent and IsIgnoredByAllFont(Object) then
+            pcall(function()
+                Object.FontFace = Original
+            end)
+            AllFontOriginals[Object] = nil
+        end
+    end
 
     if not AllFontUnloadHooked then
         AllFontUnloadHooked = true
