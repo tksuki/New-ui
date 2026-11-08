@@ -12511,21 +12511,37 @@ function Library:CreateWindow(WindowInfo)
                             return Fail("this executor has no writefile/getcustomasset")
                         end
 
-                        local Body
-                        local Ok, Result = pcall(function()
-                            return game:HttpGet(CB.Url)
-                        end)
-                        if Ok and typeof(Result) == "string" and #Result > 16 then
-                            Body = Result
-                        else
+                        local function Get(Url)
+                            local Ok, Result = pcall(function()
+                                return game:HttpGet(Url)
+                            end)
+                            if Ok and typeof(Result) == "string" and #Result > 16 then
+                                return Result
+                            end
                             local Request = request or http_request or (syn and syn.request) or (http and http.request)
                             if Request then
-                                local Ok2, Response = pcall(Request, { Url = CB.Url, Method = "GET" })
+                                local Ok2, Response = pcall(Request, { Url = Url, Method = "GET" })
                                 if Ok2 and typeof(Response) == "table" and Response.Body and #Response.Body > 16
                                     and (Response.StatusCode or 200) == 200 then
-                                    Body = Response.Body
+                                    return Response.Body
                                 end
                             end
+                        end
+
+                        local Body = Get(CB.Url)
+                        -- a file-hosting "download page" (html) instead of the file itself:
+                        -- look inside for the real mp4/webm/png/jpg link and download that
+                        if Body and Body:sub(1, 1) ~= "\137" and Body:find("<", 1, true) and Body:lower():find("<html", 1, true) then
+                            local Direct
+                            for Link in Body:gmatch("https?://[^%s\"'<>()]+") do
+                                local Clean = Link:lower():gsub("[%?#].*$", "")
+                                if Clean:match("%.mp4$") or Clean:match("%.webm$") or Clean:match("%.png$")
+                                    or Clean:match("%.jpe?g$") then
+                                    Direct = Link:gsub("&amp;", "&")
+                                    break
+                                end
+                            end
+                            Body = Direct and Get(Direct) or nil
                         end
                         if not Body then
                             return Fail("download failed")
