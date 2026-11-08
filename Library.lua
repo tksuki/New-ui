@@ -280,11 +280,11 @@ local Library = {
     --// Scheme \\--
     IsLightTheme = false,
     Scheme = {
-        BackgroundColor = Color3.fromRGB(26, 32, 46),
-        MainColor = Color3.fromRGB(255, 255, 255),
-        AccentColor = Color3.fromRGB(64, 156, 255),
-        OutlineColor = Color3.fromRGB(255, 255, 255),
-        FontColor = Color3.fromRGB(255, 255, 255),
+        BackgroundColor = Color3.fromRGB(12, 16, 30),   -- panels / group boxes: deep smoky glass
+        MainColor = Color3.fromRGB(62, 70, 104),        -- buttons, toggles, inputs: lighter slate glass
+        AccentColor = Color3.fromRGB(200, 80, 255),     -- ON / selected / sliders: vivid violet-magenta
+        OutlineColor = Color3.fromRGB(255, 255, 255),   -- rim light
+        FontColor = Color3.fromRGB(245, 246, 255),
         Font = Font.fromEnum(Enum.Font.GothamMedium),
 
         RedColor = Color3.fromRGB(255, 50, 50),
@@ -3302,7 +3302,7 @@ function Library:AddDraggableLabel(...)
     local Label = New("TextLabel", {
         AutomaticSize = Enum.AutomaticSize.XY,
         BackgroundColor3 = "BackgroundColor",
-        BackgroundTransparency = 0.7,
+        BackgroundTransparency = 0.6,
         Size = UDim2.fromOffset(0, 0),
         Position = UDim2.fromOffset(6, 6),
         Text = Text,
@@ -3441,7 +3441,7 @@ function Library:AddDraggableButton(...)
 
     local Button = New("TextButton", {
         BackgroundColor3 = "BackgroundColor",
-        BackgroundTransparency = 0.7,
+        BackgroundTransparency = 0.6,
         Position = UDim2.fromOffset(6, 6),
         TextSize = 16,
         ZIndex = 1,
@@ -3523,7 +3523,7 @@ function Library:AddDraggableMenu(Name: string)
     local Holder = New("Frame", {
         AutomaticSize = Enum.AutomaticSize.XY,
         BackgroundColor3 = "BackgroundColor",
-        BackgroundTransparency = 0.7,
+        BackgroundTransparency = 0.6,
         Position = UDim2.fromOffset(6, 6),
         Size = UDim2.fromOffset(0, 0),
         ZIndex = 1,
@@ -3619,7 +3619,7 @@ function Library:AddDraggableImageButton(...)
 
     local Button = New("TextButton", {
         BackgroundColor3 = "BackgroundColor",
-        BackgroundTransparency = 0.7,
+        BackgroundTransparency = 0.6,
         Position = UDim2.fromOffset(6, 6),
         Size = UDim2.fromOffset(IconSize + 12, IconSize + 12),
         Text = "",
@@ -3752,7 +3752,7 @@ function Library:AddContextMenu(
             AutomaticCanvasSize = Enum.AutomaticSize.None,
             AutomaticSize = List == 1 and Enum.AutomaticSize.Y or Enum.AutomaticSize.None,
             BackgroundColor3 = "BackgroundColor",
-            BackgroundTransparency = 0.7,
+            BackgroundTransparency = 0.6,
             BottomImage = "rbxasset://textures/ui/Scroll/scroll-middle.png",
             CanvasSize = UDim2.fromOffset(0, 0),
             ScrollBarImageColor3 = "OutlineColor",
@@ -3766,7 +3766,7 @@ function Library:AddContextMenu(
     else
         Menu = New("Frame", {
             BackgroundColor3 = "BackgroundColor",
-            BackgroundTransparency = 0.7,
+            BackgroundTransparency = 0.6,
             Size = typeof(Size) == "function" and Size() or Size,
             Visible = false,
             ZIndex = 1,
@@ -4101,7 +4101,7 @@ end))
 --// Tooltip \\--
 local TooltipLabel = New("TextLabel", {
     BackgroundColor3 = "BackgroundColor",
-    BackgroundTransparency = 0.7,
+    BackgroundTransparency = 0.6,
     TextSize = 14,
     TextWrapped = true,
     Visible = false,
@@ -4522,7 +4522,7 @@ do
 
         local Picker = New("TextButton", {
             BackgroundColor3 = "MainColor",
-            BackgroundTransparency = 0.78,
+            BackgroundTransparency = 0.5,
             Size = UDim2.fromOffset(21, 21),
             Text = (IsForButton and SlideOverflow) and "" or KeyPicker.Value,
             TextSize = 14,
@@ -4664,7 +4664,7 @@ do
             local Checkbox = New("Frame", {
                 AnchorPoint = Vector2.new(0, 0.5),
                 BackgroundColor3 = "MainColor",
-                BackgroundTransparency = 0.78,
+                BackgroundTransparency = 0.5,
                 Position = UDim2.fromScale(0, 0.5),
                 Size = UDim2.fromOffset(14, 14),
                 SizeConstraint = Enum.SizeConstraint.RelativeYY,
@@ -5994,7 +5994,7 @@ do
 
         local HueBox = New("TextBox", {
             BackgroundColor3 = "MainColor",
-            BackgroundTransparency = 0.78,
+            BackgroundTransparency = 0.5,
             ClearTextOnFocus = false,
             Size = UDim2.fromScale(1, 1),
             Text = "#??????",
@@ -6017,7 +6017,7 @@ do
 
         local RgbBox = New("TextBox", {
             BackgroundColor3 = "MainColor",
-            BackgroundTransparency = 0.78,
+            BackgroundTransparency = 0.5,
             ClearTextOnFocus = false,
             Size = UDim2.fromScale(1, 1),
             Text = "?, ?, ?",
@@ -6133,7 +6133,7 @@ do
 
         local CopyColorButton = New("TextButton", {
             BackgroundColor3 = "MainColor",
-            BackgroundTransparency = 0.78,
+            BackgroundTransparency = 0.5,
             Size = UDim2.fromScale(1, 1),
             Text = "Copy color",
             TextSize = 14,
@@ -6153,7 +6153,7 @@ do
 
         local PasteColorButton = New("TextButton", {
             BackgroundColor3 = "MainColor",
-            BackgroundTransparency = 0.78,
+            BackgroundTransparency = 0.5,
             Size = UDim2.fromScale(1, 1),
             Text = "Paste color",
             TextSize = 14,
@@ -6536,7 +6536,7 @@ do
 
         local Gear = New("TextButton", {
             BackgroundColor3 = "MainColor",
-            BackgroundTransparency = 0.78,
+            BackgroundTransparency = 0.5,
             Size = UDim2.fromOffset(18, 18),
             Text = "",
         })
@@ -6845,7 +6845,7 @@ do
             New("Frame", {
                 AnchorPoint = Vector2.new(0, 0.5),
                 BackgroundColor3 = "MainColor",
-                BackgroundTransparency = 0.78,
+                BackgroundTransparency = 0.5,
                 BorderColor3 = "OutlineColor",
                 BorderSizePixel = 1,
                 Position = UDim2.fromScale(0, 0.5),
@@ -6855,7 +6855,7 @@ do
             New("Frame", {
                 AnchorPoint = Vector2.new(1, 0.5),
                 BackgroundColor3 = "MainColor",
-                BackgroundTransparency = 0.78,
+                BackgroundTransparency = 0.5,
                 BorderColor3 = "OutlineColor",
                 BorderSizePixel = 1,
                 Position = UDim2.fromScale(1, 0.5),
@@ -6866,7 +6866,7 @@ do
             New("Frame", {
                 AnchorPoint = Vector2.new(0, 0.5),
                 BackgroundColor3 = "MainColor",
-                BackgroundTransparency = 0.78,
+                BackgroundTransparency = 0.5,
                 BorderColor3 = "OutlineColor",
                 BorderSizePixel = 1,
                 Position = UDim2.fromScale(0, 0.5),
@@ -7680,7 +7680,7 @@ do
 
         local Checkbox = New("Frame", {
             BackgroundColor3 = "MainColor",
-            BackgroundTransparency = 0.78,
+            BackgroundTransparency = 0.5,
             Size = UDim2.fromScale(1, 1),
             SizeConstraint = Enum.SizeConstraint.RelativeYY,
             Parent = Button,
@@ -7935,7 +7935,7 @@ do
         local Switch = New("Frame", {
             AnchorPoint = Vector2.new(1, 0),
             BackgroundColor3 = "MainColor",
-            BackgroundTransparency = 0.78,
+            BackgroundTransparency = 0.5,
             Position = UDim2.fromScale(1, 0),
             Size = UDim2.fromOffset(32, 18),
             Parent = Button,
@@ -8208,7 +8208,7 @@ do
         local Box = New("TextBox", {
             AnchorPoint = Vector2.new(0, 1),
             BackgroundColor3 = "MainColor",
-            BackgroundTransparency = 0.78,
+            BackgroundTransparency = 0.5,
             ClearTextOnFocus = not Input.Disabled and Input.ClearTextOnFocus,
             PlaceholderText = Input.Placeholder,
             Position = UDim2.fromScale(0, 1),
@@ -8483,7 +8483,7 @@ do
             Active = not Slider.Disabled,
             AnchorPoint = Vector2.new(0, 1),
             BackgroundColor3 = "MainColor",
-            BackgroundTransparency = 0.78,
+            BackgroundTransparency = 0.5,
             Position = UDim2.fromScale(0, 1),
             Size = UDim2.new(1, 0, 0, 15),
             Text = "",
@@ -8916,7 +8916,7 @@ do
         local DisplayContainer = New("TextButton", {
             AnchorPoint = Vector2.new(0, 1),
             BackgroundColor3 = "MainColor",
-            BackgroundTransparency = 0.78,
+            BackgroundTransparency = 0.5,
             Position = UDim2.fromScale(0, 1),
             Size = UDim2.new(1, 0, 0, 21),
             Text = "",
@@ -10063,7 +10063,7 @@ do
         local Box = New("Frame", {
             AnchorPoint = Vector2.new(0, 1),
             BackgroundColor3 = "MainColor",
-            BackgroundTransparency = 0.78,
+            BackgroundTransparency = 0.5,
             BorderColor3 = "OutlineColor",
             BorderSizePixel = 1,
             Position = UDim2.fromScale(0, 1),
@@ -10534,7 +10534,7 @@ do
         local Box = New("Frame", {
             AnchorPoint = Vector2.new(0, 1),
             BackgroundColor3 = "MainColor",
-            BackgroundTransparency = 0.78,
+            BackgroundTransparency = 0.5,
             BorderColor3 = "OutlineColor",
             BorderSizePixel = 1,
             Position = UDim2.fromScale(0, 1),
@@ -10909,7 +10909,7 @@ do
         do
             DepGroupboxContainer = New("Frame", {
                 BackgroundColor3 = "BackgroundColor",
-                BackgroundTransparency = 0.7,
+                BackgroundTransparency = 0.6,
                 Size = UDim2.fromScale(1, 0),
                 Visible = false,
                 Parent = BoxHolder,
@@ -11193,7 +11193,7 @@ function Library:Notify(...)
     local Holder = New("Frame", {
         AutomaticSize = Enum.AutomaticSize.Y,
         BackgroundColor3 = "MainColor",
-        BackgroundTransparency = 0.78,
+        BackgroundTransparency = 0.5,
         Position = Library.NotifySide:lower() == "left" and UDim2.new(-1, -8, 0, 0) or UDim2.new(1, 8, 0, 0),
         Size = UDim2.new(1, 0, 0, 0),
         ZIndex = 5,
@@ -11467,7 +11467,7 @@ function Library:Notify(...)
     })
     local TimerBar = New("Frame", {
         BackgroundColor3 = "BackgroundColor",
-        BackgroundTransparency = 0.7,
+        BackgroundTransparency = 0.6,
         BorderColor3 = "OutlineColor",
         BorderSizePixel = 1,
         Position = UDim2.fromOffset(0, 3),
@@ -11732,7 +11732,7 @@ function Library:CreateWindow(WindowInfo)
                 local Checkbox = New("Frame", {
                     AnchorPoint = Vector2.new(0, 0.5),
                     BackgroundColor3 = "MainColor",
-                    BackgroundTransparency = 0.78,
+                    BackgroundTransparency = 0.5,
                     Position = UDim2.fromScale(0, 0.5),
                     Size = UDim2.fromOffset(14, 14),
                     Parent = Holder,
@@ -12213,7 +12213,7 @@ function Library:CreateWindow(WindowInfo)
 
         SearchBox = New("TextBox", {
             BackgroundColor3 = "MainColor",
-            BackgroundTransparency = 0.78,
+            BackgroundTransparency = 0.5,
             PlaceholderText = "Search",
             Size = WindowInfo.SearchbarSize,
             TextScaled = true,
@@ -12364,7 +12364,7 @@ function Library:CreateWindow(WindowInfo)
         Tabs = New("ScrollingFrame", {
             AutomaticCanvasSize = Enum.AutomaticSize.Y,
             BackgroundColor3 = "BackgroundColor",
-            BackgroundTransparency = 0.7,
+            BackgroundTransparency = 0.6,
             CanvasSize = UDim2.fromScale(0, 0),
             Position = UDim2.fromOffset(0, 49),
             ScrollBarImageTransparency = 1,
@@ -13360,7 +13360,7 @@ function Library:CreateWindow(WindowInfo)
             do
                 TabboxHolder = New("Frame", {
                     BackgroundColor3 = "BackgroundColor",
-                    BackgroundTransparency = 0.7,
+                    BackgroundTransparency = 0.6,
                     Size = UDim2.fromScale(1, 0),
                     Parent = BoxHolder,
                 })
@@ -13783,7 +13783,7 @@ function Library:CreateWindow(WindowInfo)
             do
                 GroupboxHolder = New("Frame", {
                     BackgroundColor3 = "BackgroundColor",
-                    BackgroundTransparency = 0.7,
+                    BackgroundTransparency = 0.6,
                     Size = UDim2.fromScale(1, 0),
                     Parent = BoxHolder,
                 })
@@ -14513,7 +14513,7 @@ function Library:CreateWindow(WindowInfo)
 
             local Box = New("TextBox", {
                 BackgroundColor3 = "MainColor",
-                BackgroundTransparency = 0.78,
+                BackgroundTransparency = 0.5,
                 PlaceholderText = "Key",
                 Size = UDim2.new(1, -71, 1, 0),
                 TextSize = 14,
@@ -14554,7 +14554,7 @@ function Library:CreateWindow(WindowInfo)
             local Button = New("TextButton", {
                 AnchorPoint = Vector2.new(1, 0),
                 BackgroundColor3 = "MainColor",
-                BackgroundTransparency = 0.78,
+                BackgroundTransparency = 0.5,
                 Position = UDim2.fromScale(1, 0),
                 Size = UDim2.new(0, 63, 1, 0),
                 Text = "Execute",
@@ -15084,7 +15084,7 @@ function Library:CreateWindow(WindowInfo)
         DialogFrame = New("TextButton", {
             AnchorPoint = Vector2.new(0.5, 0.5),
             BackgroundColor3 = "BackgroundColor",
-            BackgroundTransparency = 0.7,
+            BackgroundTransparency = 0.6,
             Position = UDim2.fromScale(0.5, 0.5),
             Size = UDim2.fromOffset(300, 0),
             AutomaticSize = Enum.AutomaticSize.Y,
@@ -16066,7 +16066,7 @@ function Library:CreateLoading(LoadingInfo)
     --// Progress Bar \\--
     local SliderBar = New("Frame", {
         BackgroundColor3 = "MainColor",
-        BackgroundTransparency = 0.78,
+        BackgroundTransparency = 0.5,
         Size = UDim2.new(0.7, 0, 0, 15),
         Parent = InnerContent,
     })
