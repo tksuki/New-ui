@@ -7204,6 +7204,7 @@ do
             local Base = New("TextButton", {
                 Active = not Button.Disabled,
                 BackgroundColor3 = Button.Disabled and "BackgroundColor" or "MainColor",
+                BackgroundTransparency = 0.25,
                 LayoutOrder = Button.Type == "SubButton" and 2 or 0,
                 Size = UDim2.fromScale(1, 1),
                 Text = "",
@@ -11081,6 +11082,36 @@ function Library:SetFont(FontFace)
     end
 end
 
+--// Font selector (Settings tab) \\--
+Library.AutoFontSelector = true -- adds a "Font" group box to every tab whose name contains "setting"
+Library.FontChoices = {
+    { Name = "Press Start 2P", Face = Font.new("rbxasset://fonts/families/PressStart2P.json", Enum.FontWeight.Regular) },
+    { Name = "Grenze Gotisch", Face = Font.new("rbxasset://fonts/families/GrenzeGotisch.json", Enum.FontWeight.Regular) },
+}
+
+function Library:AddFontSelector(Groupbox)
+    assert(Groupbox and Groupbox.AddDropdown, "Library:AddFontSelector expects a groupbox")
+
+    local BaseFont = Library.FontBase or Library.Scheme.Font
+    Library.FontBase = BaseFont
+
+    local Names, Faces = {}, {}
+    for _, Choice in Library.FontChoices do
+        table.insert(Names, Choice.Name)
+        Faces[Choice.Name] = Choice.Face
+    end
+
+    return Groupbox:AddDropdown("UIFontSelector", {
+        Text = "Font",
+        Values = Names,
+        AllowNull = true, -- deselect = back to the original font
+        Tooltip = "Pick a UI font (deselect to restore the default)",
+        Callback = function(Value)
+            Library:SetFont(Faces[Value] or BaseFont)
+        end,
+    })
+end
+
 function Library:SetBackgroundImage(Image: string | number)
     assert(typeof(Image) == "string" or typeof(Image) == "number", "Expected string/number got " .. typeof(Image))
 
@@ -14353,6 +14384,12 @@ function Library:CreateWindow(WindowInfo)
         TabButton.MouseButton1Click:Connect(Tab.Show)
 
         Library.Tabs[Name] = Tab
+
+        if Library.AutoFontSelector and typeof(Name) == "string" and Name:lower():find("setting", 1, true) then
+            pcall(function()
+                Library:AddFontSelector(Tab:AddLeftGroupbox("Font"))
+            end)
+        end
 
         return Tab
     end
