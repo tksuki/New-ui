@@ -1,0 +1,24 @@
+-- ウィンドウのアイコン
+local Window = Library:CreateWindow({
+    Title = "My Hub",
+    Icon = "user:68725198",          -- UserId
+})
+
+-- ユーザー名でも指定可能
+local Tab = Window:AddTab({ Name = "Main", Icon = "user:Roblox" })
+
+-- テーブル指定(サムネ種類も選べる)
+local Tab2 = Window:AddTab({ Name = "Profile", Icon = { UserId = 68725198, Type = "AvatarBust" } })
+
+-- Groupbox / Button
+local Box = Tab:AddGroupbox({ Side = 1, Name = "Info", IconName = "user:68725198" })
+Box:AddButton({ Text = "Hello", Icon = "user:Roblox", Func = function() end })
+
+-- 通知
+Library:Notify({ Title = "Welcome", Description = "Hi!", BigIcon = "user:68725198" })
+
+-- 大きく表示(AddImage)
+Box:AddImage("UserImage", { Image = "user:68725198", Height = 150 })
+
+-- 全体のデフォルト種類を変更
+Library.UserIconType = "AvatarBust"
