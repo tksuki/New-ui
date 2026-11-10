@@ -1577,9 +1577,88 @@ function Library:GetIcon(IconName: string): Icon?
     return if Success then Icon else nil
 end
 
-function Library:GetCustomIcon(IconName: string): any
+--// User Avatar Icons \\--
+Library.UserIconType = "AvatarHeadShot" -- "AvatarHeadShot" / "AvatarBust" / "Avatar"
+Library.UserIconSize = 150
+local UserIdCache = {}
+
+-- ユーザー名 or 数字ID -> UserId (失敗したら nil)
+function Library:ResolveUserId(User: any): number?
+    if typeof(User) == "number" then
+        return User
+    end
+    if typeof(User) ~= "string" then
+        return nil
+    end
+
+    User = Trim(User)
+    local AsNumber = tonumber(User)
+    if AsNumber then
+        return AsNumber
+    end
+
+    local Key = User:lower()
+    if UserIdCache[Key] then
+        return UserIdCache[Key]
+    end
+
+    -- サーバーにいるプレイヤーならHTTP不要
+    for _, Player in Players:GetPlayers() do
+        if Player.Name:lower() == Key or Player.DisplayName:lower() == Key then
+            UserIdCache[Key] = Player.UserId
+            return Player.UserId
+        end
+    end
+
+    local Success, UserId = pcall(Players.GetUserIdFromNameAsync, Players, User)
+    if Success and typeof(UserId) == "number" then
+        UserIdCache[Key] = UserId
+        return UserId
+    end
+
+    return nil
+end
+
+function Library:GetUserIcon(User: any, ThumbType: string?, Size: number?): any
+    local UserId = Library:ResolveUserId(User)
+    if not UserId then
+        return nil
+    end
+
+    local Px = Size or Library.UserIconSize
+    return {
+        Url = string.format(
+            "rbxthumb://type=%s&id=%d&w=%d&h=%d",
+            ThumbType or Library.UserIconType, UserId, Px, Px
+        ),
+        ImageRectOffset = Vector2.zero,
+        ImageRectSize = Vector2.zero,
+        Custom = true, -- 色が乗らないようにする
+        UserId = UserId,
+    }
+end
+
+function Library:GetCustomIcon(IconName: any): any
     if not IconName then
         return nil
+    end
+
+    -- テーブル指定: { UserId = 68725198 } / { Username = "Roblox", Type = "AvatarBust" }
+    if typeof(IconName) == "table" then
+        local User = IconName.UserId or IconName.Username or IconName.User
+        if User ~= nil then
+            return Library:GetUserIcon(User, IconName.Type, IconName.Size)
+        end
+        return nil
+    end
+
+    -- 文字列指定: "user:68725198" / "user:Roblox" / "avatar:..." / "player:..."
+    if typeof(IconName) == "string" then
+        local Prefix, Value = IconName:match("^(%a+):(.+)$")
+        Prefix = Prefix and Prefix:lower()
+        if Prefix == "user" or Prefix == "avatar" or Prefix == "player" then
+            return Library:GetUserIcon(Trim(Value))
+        end
     end
 
     if tonumber(IconName) then
